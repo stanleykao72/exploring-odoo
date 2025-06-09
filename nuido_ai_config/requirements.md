@@ -175,5 +175,3 @@ graph TD
 | M4: 系統上線 | 第11天 | 完整系統可用 |
 
 **總計**: 8-11 個工作天
-
-openrouter: api key: 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
