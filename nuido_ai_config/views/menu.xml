@@ -1,0 +1,9 @@
+<odoo>
+
+    <!-- 選單項目 -->
+    <menuitem id="menu_nuido_ai_configuration"
+              name="AI Configuration"
+              parent="nuido_flow.app_menu"
+              sequence="99"/>
+
+</odoo>

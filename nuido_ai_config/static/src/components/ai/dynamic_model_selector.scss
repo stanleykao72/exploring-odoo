@@ -1,0 +1,415 @@
+/**
+ * 動態 AI 模型選擇器組件樣式
+ * 提供與 Odoo 18 風格一致的界面設計
+ */
+
+.dynamic-model-selector {
+    /* 基礎容器樣式 */
+    &__container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* 標題區域 */
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        
+        .dynamic-model-selector__label {
+            font-weight: 500;
+            color: var(--bs-gray-700);
+            margin: 0;
+            flex: 1;
+        }
+
+        .dynamic-model-selector__refresh {
+            margin-left: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            border: 1px solid var(--bs-gray-300);
+            background: transparent;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease-in-out;
+
+            &:hover:not(:disabled) {
+                background-color: var(--bs-gray-100);
+                border-color: var(--bs-gray-400);
+            }
+
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+            .fa-spin {
+                animation: spin 1s linear infinite;
+            }
+        }
+    }
+
+    /* 初始載入狀態 */
+    &__initial-loading {
+        padding: 2rem;
+        text-align: center;
+        background-color: var(--bs-gray-50);
+        border: 1px solid var(--bs-gray-200);
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+
+        .spinner-border {
+            color: var(--bs-primary);
+        }
+    }
+
+    /* 主要內容區域 */
+    &__content {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* 欄位組樣式 */
+    &__field-group {
+        .form-label {
+            font-weight: 500;
+            color: var(--bs-gray-700);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
+
+    /* 輸入框包裝器 */
+    &__input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        .form-select {
+            flex: 1;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+            &:focus {
+                border-color: var(--bs-primary);
+                box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+            }
+
+            &.is-invalid {
+                border-color: var(--bs-danger);
+                
+                &:focus {
+                    border-color: var(--bs-danger);
+                    box-shadow: 0 0 0 0.2rem rgba(var(--bs-danger-rgb), 0.25);
+                }
+            }
+        }
+    }
+
+    /* 載入指示器 */
+    &__loading-indicator {
+        position: absolute;
+        right: 2.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        z-index: 10;
+
+        .spinner-border {
+            color: var(--bs-primary);
+        }
+    }
+
+    /* 錯誤訊息樣式 */
+    &__error {
+        .alert {
+            padding: 0.75rem;
+            margin-bottom: 0;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+
+            .btn {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+                line-height: 1.2;
+            }
+        }
+    }
+
+    /* 資訊顯示區域 */
+    &__provider-info,
+    &__model-info {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background-color: var(--bs-gray-50);
+        border-radius: 0.25rem;
+        border-left: 3px solid var(--bs-info);
+
+        small {
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .fa {
+            color: var(--bs-info);
+        }
+    }
+
+    /* 無可用模型提示 */
+    &__no-models {
+        .alert {
+            margin-bottom: 0;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+        }
+    }
+
+    /* 選擇摘要 */
+    &__summary {
+        margin-top: 1rem;
+        
+        .alert {
+            margin-bottom: 0;
+            padding: 1rem;
+            background-color: rgba(var(--bs-success-rgb), 0.1);
+            border-color: var(--bs-success);
+            color: var(--bs-success-text);
+
+            .fa-check-circle {
+                color: var(--bs-success);
+            }
+
+            strong {
+                font-weight: 600;
+            }
+        }
+    }
+
+    /* 驗證提示 */
+    &__validation {
+        margin-top: 0.5rem;
+        
+        small {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+
+            .fa {
+                margin-right: 0.25rem;
+            }
+        }
+    }
+
+    /* 狀態指示器 */
+    &__status {
+        margin-top: 0.5rem;
+    }
+
+    &__loading-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+
+        small {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--bs-gray-600);
+        }
+
+        .spinner-border {
+            margin-right: 0.5rem;
+        }
+    }
+
+    /* 尺寸變體 */
+    &--sm {
+        .dynamic-model-selector__content {
+            gap: 1rem;
+        }
+
+        .dynamic-model-selector__field-group .form-label {
+            font-size: 0.8rem;
+        }
+
+        .dynamic-model-selector__provider-info,
+        .dynamic-model-selector__model-info {
+            padding: 0.375rem;
+            
+            small {
+                font-size: 0.75rem;
+            }
+        }
+    }
+
+    &--lg {
+        .dynamic-model-selector__content {
+            gap: 2rem;
+        }
+
+        .dynamic-model-selector__field-group .form-label {
+            font-size: 1rem;
+        }
+
+        .dynamic-model-selector__provider-info,
+        .dynamic-model-selector__model-info {
+            padding: 0.75rem;
+            
+            small {
+                font-size: 0.875rem;
+            }
+        }
+    }
+
+    /* 狀態變體 */
+    &--loading {
+        pointer-events: none;
+        
+        .form-select {
+            background-color: var(--bs-gray-100);
+        }
+    }
+
+    &--error {
+        .dynamic-model-selector__header {
+            border-bottom: 2px solid var(--bs-danger);
+            padding-bottom: 0.5rem;
+        }
+    }
+
+    &--disabled {
+        opacity: 0.7;
+        pointer-events: none;
+
+        .form-select {
+            background-color: var(--bs-gray-100);
+            color: var(--bs-gray-600);
+        }
+    }
+
+    &--required {
+        .dynamic-model-selector__label::after {
+            content: ' *';
+            color: var(--bs-danger);
+        }
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 576px) {
+        &__header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+
+            .dynamic-model-selector__refresh {
+                align-self: flex-end;
+                margin-left: 0;
+            }
+        }
+
+        &__content {
+            gap: 1rem;
+        }
+
+        &__summary .alert {
+            padding: 0.75rem;
+            font-size: 0.875rem;
+        }
+    }
+
+    /* 深色模式支援 */
+    @media (prefers-color-scheme: dark) {
+        &__initial-loading {
+            background-color: var(--bs-gray-800);
+            border-color: var(--bs-gray-700);
+            color: var(--bs-gray-200);
+        }
+
+        &__provider-info,
+        &__model-info {
+            background-color: var(--bs-gray-800);
+            color: var(--bs-gray-200);
+        }
+
+        .form-label {
+            color: var(--bs-gray-200) !important;
+        }
+    }
+
+    /* 動畫效果 */
+    &__content > * {
+        animation: fadeInUp 0.3s ease-out;
+    }
+
+    &__provider-section {
+        animation-delay: 0.1s;
+    }
+
+    &__model-section {
+        animation-delay: 0.2s;
+    }
+
+    &__summary {
+        animation-delay: 0.3s;
+    }
+}
+
+/* 動畫關鍵影格 */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 高對比度支援 */
+@media (prefers-contrast: high) {
+    .dynamic-model-selector {
+        &__provider-info,
+        &__model-info {
+            border-left-width: 4px;
+            border-color: var(--bs-info);
+        }
+
+        &__error .alert {
+            border-width: 2px;
+        }
+
+        &__summary .alert {
+            border-width: 2px;
+        }
+    }
+}
+
+/* 減少動畫偏好支援 */
+@media (prefers-reduced-motion: reduce) {
+    .dynamic-model-selector {
+        &__content > * {
+            animation: none;
+        }
+
+        .fa-spin {
+            animation: none;
+        }
+
+        .form-select {
+            transition: none;
+        }
+    }
+
+    @keyframes fadeInUp {
+        0%, 100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}

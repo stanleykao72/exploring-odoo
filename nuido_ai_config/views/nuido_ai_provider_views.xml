@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- AI 供應商管理視圖 -->
+    
+    <!-- 供應商列表視圖 (list view) -->
+    <record id="view_nuido_ai_provider_list" model="ir.ui.view">
+        <field name="name">nuido.ai.provider.list</field>
+        <field name="model">nuido.ai.provider</field>
+        <field name="arch" type="xml">
+            <list decoration-success="connection_status=='connected'" 
+                  decoration-danger="connection_status=='failed'" 
+                  decoration-muted="not active"
+                  decoration-info="connection_status=='testing'">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="api_type"/>
+                <field name="api_base_url"/>
+                <field name="connection_status" widget="badge" 
+                       decoration-success="connection_status=='connected'"
+                       decoration-danger="connection_status=='failed'"
+                       decoration-warning="connection_status=='not_tested'"
+                       decoration-info="connection_status=='testing'"/>
+                <field name="model_count" string="Model Count"/>
+                <field name="last_test_date" string="Last Test"/>
+                <field name="active" widget="boolean_toggle"/>
+                <button name="test_connection" type="object" 
+                        icon="fa-plug" title="Test Connection"
+                        invisible="active == False"/>
+                <button name="action_view_models" type="object" 
+                        icon="fa-list" title="View Models"
+                        invisible="model_count == 0"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- 供應商表單視圖 (form view) -->
+    <record id="view_nuido_ai_provider_form" model="ir.ui.view">
+        <field name="name">nuido.ai.provider.form</field>
+        <field name="model">nuido.ai.provider</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="test_connection" type="object" 
+                            string="Test Connection" class="btn-primary"
+                            invisible="active == False"/>
+                    <field name="connection_status" widget="statusbar" 
+                           statusbar_visible="not_tested,testing,connected,failed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_models" type="object" 
+                                class="oe_stat_button" icon="fa-cubes"
+                                invisible="model_count == 0">
+                            <field name="model_count" widget="statinfo" string="Models"/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="已停用" 
+                            invisible="active == True" 
+                            bg_color="bg-danger"/>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="供應商名稱..."/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="display_name" readonly="1"/>
+                            <field name="active"/>
+                            <field name="api_type"/>
+                            <field name="sequence"/>
+                            <field name="description" widget="text"/>
+                        </group>
+                        
+                        <group name="api_config" string="API Configuration">
+                            <field name="api_base_url" placeholder="https://api.example.com"/>
+                            <field name="api_key" password="True" placeholder="API 密鑰"/>
+                        </group>
+                    </group>
+                    
+                    <group name="connection_status" string="Connection Status"
+                           invisible="connection_status == 'not_tested'">
+                        <group>
+                            <field name="last_test_date" readonly="1"/>
+                            <field name="error_message" readonly="1" 
+                                   invisible="connection_status != 'failed'"
+                                   widget="text"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Available Models" name="models"
+                              invisible="model_count == 0">
+                            <field name="model_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="model_id"/>
+                                    <field name="owned_by"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- 供應商搜尋視圖 (search view) -->
+    <record id="view_nuido_ai_provider_search" model="ir.ui.view">
+        <field name="name">nuido.ai.provider.search</field>
+        <field name="model">nuido.ai.provider</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Provider Name"
+                       filter_domain="['|', ('name', 'ilike', self), ('display_name', 'ilike', self)]"/>
+                <field name="api_type" string="API Type"/>
+                <field name="api_base_url" string="API URL"/>
+                <field name="description" string="Description"/>
+                
+                <separator/>
+                
+                <filter name="active" string="Active"
+                        domain="[('active', '=', True)]" 
+                        help="顯示已啟用的供應商"/>
+                <filter name="inactive" string="Inactive"
+                        domain="[('active', '=', False)]" 
+                        help="顯示已停用的供應商"/>
+                
+                <separator/>
+                
+                <filter name="connected" string="Connected"
+                        domain="[('connection_status', '=', 'connected')]" 
+                        help="顯示連接成功的供應商"/>
+                <filter name="failed" string="Failed"
+                        domain="[('connection_status', '=', 'failed')]" 
+                        help="顯示連接失敗的供應商"/>
+                <filter name="not_tested" string="Not Tested"
+                        domain="[('connection_status', '=', 'not_tested')]" 
+                        help="顯示未測試連接的供應商"/>
+                <filter name="testing" string="Testing"
+                        domain="[('connection_status', '=', 'testing')]" 
+                        help="顯示正在測試連接的供應商"/>
+                
+                <separator/>
+                
+                <filter name="has_models" string="Has Models"
+                        domain="[('model_ids', '!=', False)]" 
+                        help="顯示有可用模型的供應商"/>
+                <filter name="no_models" string="No Models"
+                        domain="[('model_ids', '=', False)]" 
+                        help="顯示無可用模型的供應商"/>
+                
+                <group expand="0" string="Group By">
+                    <filter name="group_by_api_type" string="API Type"
+                            context="{'group_by': 'api_type'}"/>
+                    <filter name="group_by_connection_status" string="Connection Status"
+                            context="{'group_by': 'connection_status'}"/>
+                    <filter name="group_by_active" string="Active Status"
+                            context="{'group_by': 'active'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- 供應商看板視圖 (kanban view) -->
+    <record id="view_nuido_ai_provider_kanban" model="ir.ui.view">
+        <field name="name">nuido.ai.provider.kanban</field>
+        <field name="model">nuido.ai.provider</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="api_type" class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="display_name"/>
+                <field name="api_type"/>
+                <field name="connection_status"/>
+                <field name="model_count"/>
+                <field name="active"/>
+                <field name="last_test_date"/>
+                <field name="error_message"/>
+                
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click 
+                                          #{record.active.raw_value ? '' : 'o_kanban_color_2'}">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <strong><field name="name"/></strong>
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="api_type"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="管理" title="管理"/>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="o_kanban_card_content">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span class="text-muted">Connection Status:</span><br/>
+                                        <span t-attf-class="badge 
+                                                          #{record.connection_status.raw_value === 'connected' ? 'badge-success' : ''}
+                                                          #{record.connection_status.raw_value === 'failed' ? 'badge-danger' : ''}
+                                                          #{record.connection_status.raw_value === 'testing' ? 'badge-info' : ''}
+                                                          #{record.connection_status.raw_value === 'not_tested' ? 'badge-secondary' : ''}">
+                                            <field name="connection_status"/>
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted">Model Count:</span><br/>
+                                        <strong><field name="model_count"/></strong>
+                                    </div>
+                                </div>
+                                <t t-if="record.last_test_date.raw_value">
+                                    <div class="mt-2">
+                                        <span class="text-muted">Last Test:</span><br/>
+                                        <field name="last_test_date" widget="relative"/>
+                                    </div>
+                                </t>
+                                <t t-if="record.error_message.raw_value and record.connection_status.raw_value === 'failed'">
+                                    <div class="mt-2 text-danger">
+                                        <small><field name="error_message"/></small>
+                                    </div>
+                                </t>
+                            </div>
+                            
+                            <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                                <div class="o_kanban_card_manage_section o_kanban_manage_reports">
+                                    <div role="menuitem">
+                                        <a name="test_connection" type="object">Test Connection</a>
+                                    </div>
+                                    <div role="menuitem" t-if="record.model_count.raw_value > 0">
+                                        <a name="action_view_models" type="object">View Models</a>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_card_manage_section o_kanban_manage_new">
+                                    <div role="menuitem">
+                                        <a type="edit">Edit</a>
+                                    </div>
+                                    <div role="menuitem">
+                                        <a type="delete">Delete</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- 供應商管理動作 -->
+    <record id="action_nuido_ai_provider" model="ir.actions.act_window">
+        <field name="name">AI Provider Management</field>
+        <field name="res_model">nuido.ai.provider</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{
+            'search_default_active': 1,
+            'search_default_group_by_api_type': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AI provider configuration!
+            </p>
+            <p>
+                AI Provider Management allows you to:<br/>
+                • Configure multiple AI API providers<br/>
+                • Test API connection status<br/>
+                • Automatically sync available models<br/>
+                • Manage provider activation status
+            </p>
+        </field>
+    </record>
+
+</odoo>

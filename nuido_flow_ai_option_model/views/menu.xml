@@ -1,0 +1,57 @@
+<odoo>
+
+    <!-- 選單項目 -->
+    <menuitem id="menu_nuido_ai_configuration"
+              name="AI Configuration"
+              parent="nuido_flow.app_menu"
+              sequence="99"/>
+
+    <menuitem id="menu_nuido_ai_provider"
+              name="AI Providers"
+              parent="menu_nuido_ai_configuration"
+              action="nuido_ai_config.action_nuido_ai_provider"
+              sequence="10"/>
+
+    <menuitem id="menu_nuido_ai_model"
+              name="AI Model Configuration"
+              parent="menu_nuido_ai_configuration"
+              action="nuido_ai_config.action_nuido_ai_model"
+              sequence="20"/>
+
+    <!-- Add Connection Test Menu Items under AI Configuration Menu -->
+    
+    <!-- 連接測試子選單 -->
+    <menuitem id="menu_ai_connection_test"
+                name="Connection Test"
+                parent="menu_nuido_ai_configuration"
+                sequence="30"/>
+    
+    <!-- Connection Test Dashboard -->
+    <menuitem id="menu_connection_test_dashboard"
+                name="Test Dashboard"
+                parent="menu_ai_connection_test"
+                action="nuido_ai_config.action_connection_test_dashboard"
+                sequence="10"/>
+    
+    <!-- New Connection Test -->
+    <menuitem id="menu_new_connection_test"
+                name="New Test"
+                parent="menu_ai_connection_test"
+                action="nuido_ai_config.action_connection_test_wizard"
+                sequence="20"/>
+    
+    <!-- Test History -->
+    <menuitem id="menu_connection_test_history"
+                name="Test History"
+                parent="menu_ai_connection_test"
+                action="nuido_ai_config.action_connection_test_history"
+                sequence="30"/>
+    
+    <!-- Connection Statistics -->
+    <menuitem id="menu_connection_statistics"
+                name="Connection Statistics"
+                parent="menu_ai_connection_test"
+                action="nuido_ai_config.action_connection_statistics"
+                sequence="40"/>
+
+</odoo>

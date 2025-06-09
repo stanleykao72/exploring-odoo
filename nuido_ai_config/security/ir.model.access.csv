@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nuido_ai_provider_user,nuido.ai.provider.user,model_nuido_ai_provider,base.group_user,1,0,0,0
+access_nuido_ai_provider_system,nuido.ai.provider.system,model_nuido_ai_provider,base.group_system,1,1,1,1
+access_nuido_ai_model_user,nuido.ai.model.user,model_nuido_ai_model,base.group_user,1,0,0,0
+access_nuido_ai_model_system,nuido.ai.model.system,model_nuido_ai_model,base.group_system,1,1,1,1
+access_nuido_ai_config_service_user,nuido.ai.config.service.user,model_nuido_ai_config_service,base.group_user,1,0,0,0
+access_nuido_ai_config_service_system,nuido.ai.config.service.system,model_nuido_ai_config_service,base.group_system,1,1,1,1
+access_nuido_ai_connection_test_wizard_user,nuido.ai.connection.test.wizard.user,model_nuido_ai_connection_test_wizard,base.group_user,1,1,1,0
+access_nuido_ai_connection_test_wizard_system,nuido.ai.connection.test.wizard.system,model_nuido_ai_connection_test_wizard,base.group_system,1,1,1,1

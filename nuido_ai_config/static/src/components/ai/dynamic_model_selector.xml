@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- 動態 AI 模型選擇器組件模板 -->
+    <t t-name="nuido_flow_ai_option_model.DynamicModelSelector" owl="1">
+        <div t-att-class="componentClass">
+            <!-- 組件標題 -->
+            <div class="dynamic-model-selector__header" t-if="props.label">
+                <label class="dynamic-model-selector__label">
+                    <t t-esc="props.label"/>
+                    <span t-if="props.required" class="text-danger">*</span>
+                </label>
+                
+                <!-- 重新整理按鈕 -->
+                <button 
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary dynamic-model-selector__refresh"
+                    t-on-click="refreshData"
+                    t-att-disabled="isLoading or props.disabled"
+                    title="重新載入資料">
+                    <i class="fa fa-refresh" t-att-class="{ 'fa-spin': isLoading }"/>
+                </button>
+            </div>
+
+            <!-- 初始載入指示器 -->
+            <div t-if="state.loading.initial" class="dynamic-model-selector__initial-loading">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                        <span class="visually-hidden">載入中...</span>
+                    </div>
+                    <span class="text-muted">正在載入 AI 配置...</span>
+                </div>
+            </div>
+
+            <!-- 主要選擇器內容 -->
+            <div t-else="" class="dynamic-model-selector__content">
+                <!-- 供應商選擇器 -->
+                <div class="dynamic-model-selector__provider-section">
+                    <div class="dynamic-model-selector__field-group">
+                        <label class="form-label">AI 供應商</label>
+                        
+                        <!-- 供應商下拉選單 -->
+                        <div class="dynamic-model-selector__input-wrapper">
+                            <select 
+                                class="form-select"
+                                t-att-class="{
+                                    'is-invalid': state.error.providers,
+                                    'form-select-sm': props.size === 'sm',
+                                    'form-select-lg': props.size === 'lg'
+                                }"
+                                t-model="state.selectedProvider"
+                                t-on-change="onProviderChange"
+                                t-att-disabled="state.loading.providers or props.disabled">
+                                
+                                <option value="">請選擇 AI 供應商</option>
+                                <t t-foreach="state.providers" t-as="provider" t-key="provider.id">
+                                    <option t-att-value="provider.id" t-esc="provider.name"/>
+                                </t>
+                            </select>
+                            
+                            <!-- 供應商載入指示器 -->
+                            <div t-if="state.loading.providers" 
+                                 class="dynamic-model-selector__loading-indicator">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">載入供應商...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 供應商錯誤訊息 -->
+                        <div t-if="state.error.providers" class="dynamic-model-selector__error">
+                            <div class="alert alert-danger d-flex align-items-center mt-2">
+                                <i class="fa fa-exclamation-triangle me-2"/>
+                                <span t-esc="state.error.providers"/>
+                                <button 
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger ms-auto"
+                                    t-on-click="retryLoadProviders">
+                                    重試
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 供應商資訊顯示 -->
+                        <div t-if="selectedProviderInfo and !state.error.providers" 
+                             class="dynamic-model-selector__provider-info">
+                            <small class="text-muted">
+                                <i class="fa fa-info-circle me-1"/>
+                                <t t-esc="selectedProviderInfo.description || selectedProviderInfo.name"/>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模型選擇器 -->
+                <div class="dynamic-model-selector__model-section" 
+                     t-if="state.selectedProvider">
+                    <div class="dynamic-model-selector__field-group">
+                        <label class="form-label">AI 模型</label>
+                        
+                        <!-- 模型下拉選單 -->
+                        <div class="dynamic-model-selector__input-wrapper">
+                            <select 
+                                class="form-select"
+                                t-att-class="{
+                                    'is-invalid': state.error.models,
+                                    'form-select-sm': props.size === 'sm',
+                                    'form-select-lg': props.size === 'lg'
+                                }"
+                                t-model="state.selectedModel"
+                                t-on-change="onModelChange"
+                                t-att-disabled="state.loading.models or props.disabled or state.models.length === 0">
+                                
+                                <option value="">請選擇 AI 模型</option>
+                                <t t-foreach="state.models" t-as="model" t-key="model.id">
+                                    <option t-att-value="model.id">
+                                        <t t-esc="model.name"/>
+                                        <t t-if="model.description"> - <t t-esc="model.description"/></t>
+                                    </option>
+                                </t>
+                            </select>
+                            
+                            <!-- 模型載入指示器 -->
+                            <div t-if="state.loading.models" 
+                                 class="dynamic-model-selector__loading-indicator">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">載入模型...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 模型錯誤訊息 -->
+                        <div t-if="state.error.models" class="dynamic-model-selector__error">
+                            <div class="alert alert-danger d-flex align-items-center mt-2">
+                                <i class="fa fa-exclamation-triangle me-2"/>
+                                <span t-esc="state.error.models"/>
+                                <button 
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger ms-auto"
+                                    t-on-click="retryLoadModels">
+                                    重試
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 無可用模型提示 -->
+                        <div t-if="!state.loading.models and !state.error.models and state.models.length === 0" 
+                             class="dynamic-model-selector__no-models">
+                            <div class="alert alert-warning d-flex align-items-center mt-2">
+                                <i class="fa fa-info-circle me-2"/>
+                                <span>此供應商暫無可用的 AI 模型</span>
+                            </div>
+                        </div>
+
+                        <!-- 模型資訊顯示 -->
+                        <div t-if="selectedModelInfo and !state.error.models" 
+                             class="dynamic-model-selector__model-info">
+                            <small class="text-muted">
+                                <i class="fa fa-cpu me-1"/>
+                                <t t-if="selectedModelInfo.version">
+                                    版本: <t t-esc="selectedModelInfo.version"/>
+                                </t>
+                                <t t-if="selectedModelInfo.description">
+                                    - <t t-esc="selectedModelInfo.description"/>
+                                </t>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 選擇摘要 -->
+                <div t-if="state.selectedProvider and state.selectedModel" 
+                     class="dynamic-model-selector__summary">
+                    <div class="alert alert-info d-flex align-items-center">
+                        <i class="fa fa-check-circle me-2"/>
+                        <span>
+                            已選擇: <strong t-esc="selectedProviderInfo?.name"/> / <strong t-esc="selectedModelInfo?.name"/>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 必填驗證提示 -->
+                <div t-if="props.required and (!state.selectedProvider or !state.selectedModel)" 
+                     class="dynamic-model-selector__validation">
+                    <small class="text-danger">
+                        <i class="fa fa-exclamation-circle me-1"/>
+                        請完成 AI 供應商和模型的選擇
+                    </small>
+                </div>
+            </div>
+
+            <!-- 組件狀態指示器 -->
+            <div class="dynamic-model-selector__status" 
+                 t-if="!state.loading.initial">
+                <div t-if="isLoading" class="dynamic-model-selector__loading-status">
+                    <small class="text-muted">
+                        <div class="spinner-border spinner-border-sm me-1" role="status">
+                            <span class="visually-hidden">處理中...</span>
+                        </div>
+                        正在載入資料...
+                    </small>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

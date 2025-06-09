@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <!-- 使用模板繼承機制擴展原始 OpenAI 節點 -->
+    <t t-name="nuido_flow_ai_option_model.openai-chat-completion-client-node-patch" 
+        t-inherit="nuido_flow_ai.openai-chat-completion-client-node" 
+        t-inherit-mode="extension">
+        
+        <!-- 替換原始節點的模型選擇器 -->
+        <xpath expr="//div[hasclass('ai-model-selector')]" position="replace">
+            <div class="ai-model-selector">
+                <!-- 條件渲染：當需要顯示舊版選擇器時 -->
+                <t t-if="props.shouldShowLegacySelector">
+                    <select t-att-id="props.aiModelInputId" 
+                            class="form-select" 
+                            t-on-change="onAiModelChanged">
+                        <option t-foreach="props.aiModels" t-as="model" 
+                                t-att-value="model" 
+                                t-att-selected="props.node.model === model">
+                            <t t-esc="model"/>
+                        </option>
+                    </select>
+                </t>
+                
+                <!-- 條件渲染：顯示動態模型選擇器 -->
+                <t t-else="">
+                    <DynamicModelSelector 
+                        value="props.dynamicModelValue"
+                        onModelChanged="(value) => props.onDynamicModelChanged(value)"
+                    />
+                </t>
+            </div>
+        </xpath>
+    </t>
+</templates>

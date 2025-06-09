@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Connection Test Wizard - Setup View -->
+        <record id="view_connection_test_wizard_form" model="ir.ui.view">
+            <field name="name">connection.test.wizard.form</field>
+            <field name="model">nuido.ai.connection.test.wizard</field>
+            <field name="arch" type="xml">
+                <form string="AI Connection Test">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="test_status" invisible="1"/>
+                                <span invisible="test_status != 'pending'">AI Connection Test Settings</span>
+                                <span invisible="test_status != 'running'">Test in progress...</span>
+                                <span invisible="test_status != 'completed'">Test completed</span>
+                                <span invisible="test_status != 'failed'">Test failed</span>
+                            </h1>
+                        </div>
+                        
+                        <group>
+                            <group string="Test Settings" invisible="test_status not in ['pending', 'failed']">
+                                <field name="test_mode" widget="radio"/>
+                                <field name="test_depth" widget="radio"/>
+                            </group>
+                            
+                            <group string="Advanced Settings" invisible="test_status not in ['pending', 'failed']">
+                                <field name="timeout"/>
+                                <field name="retry_count"/>
+                                <field name="include_inactive"/>
+                            </group>
+                        </group>
+                        
+                        <group invisible="test_status not in ['pending', 'failed']">
+                            <group string="Provider Selection" invisible="test_mode != 'single'">
+                                <field name="provider_id" domain="[('active', '=', True)]" required="test_mode == 'single'"/>
+                            </group>
+                            
+                            <group string="Provider Selection" invisible="test_mode != 'selected'">
+                                <field name="provider_ids" widget="many2many_tags" domain="[('active', '=', True)]" required="test_mode == 'selected'"/>
+                            </group>
+                        </group>
+                        
+                        <!-- Test Statistics (displayed after completion) -->
+                        <group invisible="test_status not in ['completed']">
+                            <group string="Test Statistics">
+                                <field name="total_providers" readonly="1"/>
+                                <field name="successful_providers" readonly="1"/>
+                                <field name="failed_providers" readonly="1"/>
+                            </group>
+                            <group string="Test Time">
+                                <field name="test_start_time" readonly="1"/>
+                                <field name="test_end_time" readonly="1"/>
+                                <field name="test_duration" readonly="1" widget="float_time"/>
+                            </group>
+                        </group>
+                        
+                        <!-- Test Result Summary -->
+                        <notebook invisible="test_status not in ['completed']">
+                            <page string="Test Summary" name="summary">
+                                <field name="test_summary" widget="html" readonly="1"/>
+                            </page>
+                            <page string="Detailed Results" name="details">
+                                <field name="test_results" widget="text" readonly="1"/>
+                            </page>
+                        </notebook>
+                        
+                        <!-- Progress bar (displayed during testing) -->
+                        <div invisible="test_status != 'running'" class="o_form_sheet_bg">
+                            <div class="o_horizontal_separator">Testing in progress, please wait...</div>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar" style="width: 100%">
+                                    <span class="sr-only">Testing...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </sheet>
+                    
+                    <footer>
+                        <!-- Start Test button -->
+                        <button name="action_start_test" string="Start Test" type="object"
+                                class="btn-primary" invisible="test_status not in ['pending', 'failed']"/>
+                        
+                        <!-- Action buttons after test completion -->
+                        <button name="action_retry_failed" string="Retry Failed" type="object"
+                                class="btn-warning" invisible="test_status != 'completed' or failed_providers == 0"/>
+                        
+                        <button name="action_export_results" string="Export Results" type="object"
+                                class="btn-secondary" invisible="test_status != 'completed'"/>
+                        
+                        <button string="Close" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Connection Test Wizard - Result View -->
+        <record id="view_connection_test_wizard_result" model="ir.ui.view">
+            <field name="name">connection.test.wizard.result</field>
+            <field name="model">nuido.ai.connection.test.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Test Results">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Connection Test Results</h1>
+                            <h2>
+                                <field name="successful_providers"/> / <field name="total_providers"/> Connected Successfully
+                                <span class="badge badge-success" invisible="failed_providers > 0">All Succeeded</span>
+                                <span class="badge badge-warning" invisible="failed_providers == 0">Partial Failure</span>
+                            </h2>
+                        </div>
+                        
+                        <group>
+                            <group string="Test Statistics">
+                                <field name="total_providers" readonly="1"/>
+                                <field name="successful_providers" readonly="1"/>
+                                <field name="failed_providers" readonly="1"/>
+                                <field name="test_duration" readonly="1" widget="float_time"/>
+                            </group>
+                            <group string="Test Information">
+                                <field name="test_mode" readonly="1"/>
+                                <field name="test_depth" readonly="1"/>
+                                <field name="test_start_time" readonly="1"/>
+                                <field name="test_end_time" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Visual Summary" name="visual_summary">
+                                <field name="test_summary" widget="html" readonly="1"/>
+                            </page>
+                            <page string="Detailed Results" name="detailed_results">
+                                <field name="test_results" widget="text" readonly="1"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    
+                    <footer>
+                        <button name="action_retry_failed" string="Retry Failed" type="object"
+                                class="btn-warning" invisible="failed_providers == 0"/>
+                        
+                        <button name="action_export_results" string="Export Results" type="object"
+                                class="btn-secondary"/>
+                        
+                        <button string="Close" class="btn-primary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Connection Test Dashboard View -->
+        <record id="view_connection_test_dashboard" model="ir.ui.view">
+            <field name="name">connection.test.dashboard</field>
+            <field name="model">nuido.ai.provider</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile">
+                    <field name="id"/>
+                    <field name="name"/>
+                    <field name="connection_status"/>
+                    <field name="last_test_date"/>
+                    <field name="model_count"/>
+                    <field name="error_message"/>
+                    <field name="api_type"/>
+                    <templates>
+                        <t t-name="card">
+                            <div class="oe_kanban_global_click o_kanban_record_has_image_fill">
+                                <div class="o_kanban_image_fill_left d-none d-md-block" 
+                                     t-attf-style="background-color: #{
+                                         record.connection_status.raw_value == 'connected' ? '#28a745' : 
+                                         record.connection_status.raw_value == 'failed' ? '#dc3545' : 
+                                         record.connection_status.raw_value == 'testing' ? '#ffc107' : '#6c757d'
+                                     };">
+                                    <i class="fa fa-3x" t-attf-class="#{
+                                        record.connection_status.raw_value == 'connected' ? 'fa-check-circle' :
+                                        record.connection_status.raw_value == 'failed' ? 'fa-times-circle' :
+                                        record.connection_status.raw_value == 'testing' ? 'fa-spinner fa-spin' : 'fa-question-circle'
+                                    }"
+                                    t-att-title="record.connection_status.raw_value"
+                                    style="color: white; margin-top: 20px; margin-left: 15px;"/>
+                                </div>
+                                
+                                <div class="oe_kanban_details">
+                                    <div class="o_kanban_record_top">
+                                        <div class="o_kanban_record_headings">
+                                            <strong class="o_kanban_record_title">
+                                                <field name="name"/>
+                                            </strong>
+                                            <span class="badge" t-attf-class="#{
+                                                record.connection_status.raw_value == 'connected' ? 'badge-success' : 
+                                                record.connection_status.raw_value == 'failed' ? 'badge-danger' : 
+                                                record.connection_status.raw_value == 'testing' ? 'badge-warning' : 'badge-secondary'
+                                            }">
+                                                <field name="connection_status"/>
+                                            </span>
+                                        </div>
+                                        <div class="o_kanban_record_subtitle">
+                                            <field name="api_type"/>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="o_kanban_record_body">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <strong>Model Count:</strong>
+                                                <field name="model_count"/>
+                                            </div>
+                                            <div class="col-6" t-if="record.last_test_date.raw_value">
+                                                <strong>Last Test:</strong>
+                                                <field name="last_test_date" widget="relative"/>
+                                            </div>
+                                        </div>
+                                        
+                                        <div t-if="record.error_message.raw_value and record.connection_status.raw_value == 'failed'">
+                                            <div class="text-danger mt-2">
+                                                <i class="fa fa-exclamation-triangle"/> 
+                                                <t t-esc="record.error_message.raw_value.substring(0, 100)"/>
+                                                <span t-if="record.error_message.raw_value.length > 100">...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="o_kanban_record_bottom">
+                                        <div class="oe_kanban_bottom_left">
+                                            <button name="test_connection" string="Test Connection" type="object"
+                                                    class="btn btn-sm btn-outline-primary"/>
+                                            <button name="action_view_models" string="View Models" type="object"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    invisible="model_count == 0"/>
+                                        </div>
+                                        <div class="oe_kanban_bottom_right">
+                                            <field name="active" widget="boolean_toggle"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+        
+        <!-- Connection Test History View -->
+        <record id="view_connection_test_history_list" model="ir.ui.view">
+            <field name="name">connection.test.history.list</field>
+            <field name="model">nuido.ai.connection.test.wizard</field>
+            <field name="arch" type="xml">
+                <list string="Test History" create="false" edit="false">
+                    <field name="test_start_time"/>
+                    <field name="test_mode"/>
+                    <field name="test_depth"/>
+                    <field name="total_providers"/>
+                    <field name="successful_providers"/>
+                    <field name="failed_providers"/>
+                    <field name="test_duration" widget="float_time"/>
+                    <field name="test_status" decoration-success="test_status == 'completed'"
+                           decoration-danger="test_status == 'failed'" decoration-warning="test_status == 'running'"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- Connection Test Statistics Report View -->
+        <record id="view_connection_test_statistics" model="ir.ui.view">
+            <field name="name">connection.test.statistics</field>
+            <field name="model">nuido.ai.provider</field>
+            <field name="arch" type="xml">
+                <graph string="Connection Status Statistics" type="pie">
+                    <field name="connection_status"/>
+                </graph>
+            </field>
+        </record>
+        
+        <!-- Action Definitions -->
+        
+        <!-- Launch Connection Test Wizard -->
+        <record id="action_connection_test_wizard" model="ir.actions.act_window">
+            <field name="name">Connection Test</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">nuido.ai.connection.test.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_connection_test_wizard_form"/>
+            <field name="target">new</field>
+            <field name="context">{}</field>
+        </record>
+        
+        <!-- Connection Test Dashboard -->
+        <record id="action_connection_test_dashboard" model="ir.actions.act_window">
+            <field name="name">Connection Test Dashboard</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">nuido.ai.provider</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="view_id" ref="view_connection_test_dashboard"/>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Connection Test Dashboard
+                </p>
+                <p>
+                    Here you can view the connection status of all AI providers and perform connection tests.
+                </p>
+            </field>
+        </record>
+        
+        <!-- Test History -->
+        <record id="action_connection_test_history" model="ir.actions.act_window">
+            <field name="name">Test History</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">nuido.ai.connection.test.wizard</field>
+            <field name="view_mode">list,form</field>
+            <field name="view_id" ref="view_connection_test_history_list"/>
+            <field name="domain">[('test_status', '!=', 'pending')]</field>
+            <field name="context">{'create': False}</field>
+        </record>
+        
+        <!-- Connection Statistics Report -->
+        <record id="action_connection_statistics" model="ir.actions.act_window">
+            <field name="name">Connection Statistics</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">nuido.ai.provider</field>
+            <field name="view_mode">graph,list</field>
+            <field name="view_id" ref="view_connection_test_statistics"/>
+            <field name="context">{'search_default_active': 1}</field>
+        </record>
+        
+        <!-- Quick Test from Provider View -->
+        <record id="action_test_single_provider" model="ir.actions.act_window">
+            <field name="name">Test This Provider</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">nuido.ai.connection.test.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_connection_test_wizard_form"/>
+            <field name="target">new</field>
+            <field name="context">{'default_test_mode': 'single', 'default_provider_id': active_id}</field>
+        </record>
+        
+        <!-- Batch Test All Providers -->
+        <record id="action_test_all_providers" model="ir.actions.act_window">
+            <field name="name">Test All Providers</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">nuido.ai.connection.test.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_connection_test_wizard_form"/>
+            <field name="target">new</field>
+            <field name="context">{'default_test_mode': 'batch'}</field>
+        </record>
+        
+        <!-- Test Selected Providers -->
+        <record id="action_test_selected_providers" model="ir.actions.act_window">
+            <field name="name">Test Selected Providers</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">nuido.ai.connection.test.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_connection_test_wizard_form"/>
+            <field name="target">new</field>
+            <field name="context">{'default_test_mode': 'selected', 'default_provider_ids': active_ids}</field>
+        </record>
+        
+    </data>
+</odoo>

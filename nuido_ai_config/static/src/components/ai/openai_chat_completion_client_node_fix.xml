@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+修復 openai_chat_completion_client_node 的屬性綁定錯誤
+將 props.node.dynamic_date_interval 修正為 props.node.model
+以確保前端顯示狀態與實際數據同步
+-->
+<templates xml:space="preserve">
+    <t t-name="nuido_flow_ai.openai-chat-completion-client-node" t-inherit="nuido_flow_ai.openai-chat-completion-client-node" t-inherit-mode="extension">
+        <!-- 修復 AI 模型選擇器的屬性綁定錯誤 -->
+        <xpath expr="//select[@t-on-change.stop.prevent='onAiModelChanged']//option[@value='qwen2.5-7b-instruct']" position="replace">
+            <option value="qwen2.5-7b-instruct" t-att-selected="props.node.model === 'qwen2.5-7b-instruct'">qwen2.5-7b-instruct</option>
+        </xpath>
+        
+        <xpath expr="//select[@t-on-change.stop.prevent='onAiModelChanged']//option[@value='gemma-3-4b-it']" position="replace">
+            <option value="gemma-3-4b-it" t-att-selected="props.node.model === 'gemma-3-4b-it'">gemma-3-4b-it</option>
+        </xpath>
+        
+        <xpath expr="//select[@t-on-change.stop.prevent='onAiModelChanged']//option[@value='hermes-3-llama-3.1-8b']" position="replace">
+            <option value="hermes-3-llama-3.1-8b" t-att-selected="props.node.model === 'hermes-3-llama-3.1-8b'">hermes-3-llama-3.1-8b</option>
+        </xpath>
+    </t>
+</templates>

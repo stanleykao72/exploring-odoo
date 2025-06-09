@@ -1,0 +1,17 @@
+<odoo>
+    <data>
+
+        <!-- Open AI Chat Completion Option Model-->
+        <record id="build_function_openai_chat_completion_client_option_model_node" model="nuido_base.registry">
+            <field name="category">Build Function</field>
+            <field name="key">OpenAiChatCompletionClientOptionModelNode</field>
+            <field name="value">nuido_flow_ai_option_model.flows.node_info,build_openai_chat_completion_client_option_model_node</field>
+        </record>
+        <record id="create_function_openai_chat_completion_client_option_model_node" model="nuido_base.registry">
+            <field name="category">Create Function</field>
+            <field name="key">OpenAiChatCompletionClientOptionModelNode</field>
+            <field name="value">nuido_flow_ai_option_model.flows.node_info,create_openai_chat_completion_client_option_model_node</field>
+        </record>
+
+    </data>
+</odoo>

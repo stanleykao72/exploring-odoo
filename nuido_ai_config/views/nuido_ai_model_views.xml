@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- AI Model Configuration Management View -->
+    
+    <!-- Model List View (list view) -->
+    <record id="view_nuido_ai_model_list" model="ir.ui.view">
+        <field name="name">nuido.ai.model.list</field>
+        <field name="model">nuido.ai.model</field>
+        <field name="arch" type="xml">
+            <list decoration-success="active and is_default" 
+                  decoration-info="active and not is_default"
+                  decoration-muted="not active"
+                  decoration-warning="model_type=='other'">
+                <field name="display_name"/>
+                <field name="provider_id"/>
+                <field name="model_type" widget="badge" 
+                       decoration-success="model_type=='chat'"
+                       decoration-info="model_type=='text'"
+                       decoration-warning="model_type=='embedding'"
+                       decoration-danger="model_type=='image'"
+                       decoration-primary="model_type=='multimodal'"
+                       decoration-muted="model_type=='other'"/>
+                <field name="context_length" string="Context Length"/>
+                <field name="max_tokens" string="Max Output"/>
+                <field name="temperature"/>
+                <field name="top_p"/>
+                <field name="is_default" widget="boolean_toggle" string="Default Model"/>
+                <field name="active" widget="boolean_toggle"/>
+                <button name="action_set_as_default" type="object" 
+                        icon="fa-star" title="Set as Default"
+                        invisible="not active or is_default"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Model Form View (form view) -->
+    <record id="view_nuido_ai_model_form" model="ir.ui.view">
+        <field name="name">nuido.ai.model.form</field>
+        <field name="model">nuido.ai.model</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_set_as_default" type="object" 
+                            string="Set as Default Model" class="btn-primary"
+                            invisible="not active or is_default"/>
+                    <button name="action_test_model" type="object" 
+                            string="Test Model" class="btn-secondary"
+                            invisible="not active"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_api_config" type="object" 
+                                class="oe_stat_button" icon="fa-cogs">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">API</span>
+                                <span class="o_stat_text">Configuration</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Default Model"
+                            invisible="not is_default" 
+                            bg_color="bg-success"/>
+                    <widget name="web_ribbon" title="Disabled"
+                            invisible="active" 
+                            bg_color="bg-danger"/>
+                    
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Model name, e.g. GPT-4"/>
+                        </h1>
+                        <div class="o_row">
+                            <field name="display_name" readonly="1" class="text-muted"/>
+                        </div>
+                    </div>
+                    
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="provider_id" options="{'no_create': True, 'no_edit': True}"/>
+                            <field name="model_id" placeholder="Model identifier in API"/>
+                            <field name="model_type" options="{'horizontal': true}"/>
+                            <field name="active"/>
+                            <field name="description" widget="text" placeholder="Detailed description and features of the model..."/>
+                            <field name="is_default" widget="boolean_toggle" 
+                                   help="Set this model as the default for the provider"/>
+                        </group>
+                        
+                        <group name="model_info" string="Model Information">
+                            <field name="context_length" 
+                                   help="Maximum context length supported by the model (tokens)"/>
+                            <field name="owned_by" readonly="1"
+                                   invisible="not owned_by"/>
+                        </group>
+                    </group>
+                    
+                    <group name="api_params" string="API Parameters Configuration">
+                        <group>
+                            <field name="max_tokens" 
+                                   help="Maximum output tokens per request (recommended: 512-4096)"/>
+                            <field name="temperature" widget="float" 
+                                   help="Control output randomness: 0=deterministic, 1=balanced, 2=most random"/>
+                        </group>
+                        <group>
+                            <field name="top_p" widget="float" 
+                                   help="Core sampling parameter: 0.1=conservative, 1.0=open"/>
+                        </group>
+                    </group>
+                    
+                    <group name="status_management" string="Status Management">
+                        <group>
+                            <field name="is_default" 
+                                   help="Set as default model for this provider"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Parameter Explanation" name="param_help">
+                            <group>
+                                <div class="alert alert-info" role="alert">
+                                    <h5>Parameter Configuration Explanation</h5>
+                                    <ul>
+                                        <li><strong>Temperature Parameter</strong>: Controls the randomness of model output
+                                            <ul>
+                                                <li>0.0 - 0.3: Deterministic output, suitable for factual tasks</li>
+                                                <li>0.4 - 0.7: Balance creativity and accuracy</li>
+                                                <li>0.8 - 2.0: High creativity, suitable for creative tasks</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Top P Parameter</strong>: Core sampling, controls vocabulary range
+                                            <ul>
+                                                <li>0.1 - 0.5: Conservative word selection, more predictable output</li>
+                                                <li>0.6 - 0.9: Balanced word selection</li>
+                                                <li>1.0: Consider all possible vocabulary</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Max Output Tokens</strong>: Controls response length
+                                            <ul>
+                                                <li>512: Short response</li>
+                                                <li>1024-2048: Medium length</li>
+                                                <li>4096+: Long response</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </group>
+                        </page>
+                        <page string="Model Type Explanation" name="type_help">
+                            <group>
+                                <div class="alert alert-primary" role="alert">
+                                    <h5>Model Type Details</h5>
+                                    <ul>
+                                        <li><span class="badge badge-success">Chat Model</span>: Optimized for conversation scenarios, supports multi-turn dialogue</li>
+                                        <li><span class="badge badge-info">Text Generation</span>: General text generation, suitable for single-turn tasks</li>
+                                        <li><span class="badge badge-warning">Embedding</span>: Converts text to vector representation</li>
+                                        <li><span class="badge badge-danger">Image Generation</span>: Generates images based on descriptions</li>
+                                        <li><span class="badge badge-primary">Multimodal</span>: Supports text and image input</li>
+                                        <li><span class="badge badge-secondary">Other</span>: Special purpose models</li>
+                                    </ul>
+                                </div>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Model Search View (search view) -->
+    <record id="view_nuido_ai_model_search" model="ir.ui.view">
+        <field name="name">nuido.ai.model.search</field>
+        <field name="model">nuido.ai.model</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Model Name"
+                       filter_domain="['|', '|', ('name', 'ilike', self), ('display_name', 'ilike', self), ('model_id', 'ilike', self)]"/>
+                <field name="provider_id" string="Provider"/>
+                <field name="model_type" string="Model Type"/>
+                <field name="description" string="Description"/>
+                
+                <separator/>
+                
+                <filter name="active" string="Enabled"
+                        domain="[('active', '=', True)]"
+                        help="Show enabled models"/>
+                <filter name="inactive" string="Disabled"
+                        domain="[('active', '=', False)]"
+                        help="Show disabled models"/>
+                
+                <separator/>
+                
+                <filter name="default_models" string="Default Model"
+                        domain="[('is_default', '=', True)]"
+                        help="Show default models for each provider"/>
+                <filter name="non_default_models" string="Non-default Models"
+                        domain="[('is_default', '=', False)]"
+                        help="Show non-default models"/>
+                
+                <separator/>
+                
+                <filter name="chat_models" string="Chat Models"
+                        domain="[('model_type', '=', 'chat')]"
+                        help="Show chat models"/>
+                <filter name="text_models" string="Text Generation"
+                        domain="[('model_type', '=', 'text')]"
+                        help="Show text generation models"/>
+                <filter name="embedding_models" string="Embedding"
+                        domain="[('model_type', '=', 'embedding')]"
+                        help="Show embedding models"/>
+                <filter name="image_models" string="Image Generation"
+                        domain="[('model_type', '=', 'image')]"
+                        help="Show image generation models"/>
+                <filter name="multimodal_models" string="Multimodal"
+                        domain="[('model_type', '=', 'multimodal')]"
+                        help="Show multimodal models"/>
+                <filter name="other_models" string="Other Types"
+                        domain="[('model_type', '=', 'other')]"
+                        help="Show other type models"/>
+                
+                <separator/>
+                
+                <filter name="high_context" string="Large Context"
+                        domain="[('context_length', '>=', 8000)]"
+                        help="Show models with context length >= 8K"/>
+                <filter name="medium_context" string="Medium Context"
+                        domain="[('context_length', '&gt;=', 4000), ('context_length', '&lt;', 8000)]" 
+                        help="Show models with context length between 4K-8K"/>
+                <filter name="low_context" string="Small Context"
+                        domain="[('context_length', '&lt;', 4000)]" 
+                        help="Show models with context length less than 4K"/>
+                
+                <group expand="0" string="Group By">
+                    <filter name="group_by_provider" string="Provider"
+                            context="{'group_by': 'provider_id'}"/>
+                    <filter name="group_by_model_type" string="Model Type"
+                            context="{'group_by': 'model_type'}"/>
+                    <filter name="group_by_active" string="Active Status"
+                            context="{'group_by': 'active'}"/>
+                    <filter name="group_by_default" string="Default Status"
+                            context="{'group_by': 'is_default'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Model Kanban View (kanban view) -->
+    <record id="view_nuido_ai_model_kanban" model="ir.ui.view">
+        <field name="name">nuido.ai.model.kanban</field>
+        <field name="model">nuido.ai.model</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="provider_id" class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="display_name"/>
+                <field name="provider_id"/>
+                <field name="model_type"/>
+                <field name="context_length"/>
+                <field name="max_tokens"/>
+                <field name="temperature"/>
+                <field name="top_p"/>
+                <field name="active"/>
+                <field name="is_default"/>
+                <field name="description"/>
+                
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click 
+                                          #{record.active.raw_value ? '' : 'o_kanban_color_2'}
+                                          #{record.is_default.raw_value ? 'o_kanban_color_5' : ''}">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <strong><field name="name"/></strong>
+                                        <t t-if="record.is_default.raw_value">
+                                            <i class="fa fa-star text-warning ml-2" title="Default Model"/>
+                                        </t>
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="provider_id"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage Options"/>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="o_kanban_card_content">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span class="text-muted">Model Type:</span><br/>
+                                        <t t-if="record.model_type.raw_value === 'chat'">
+                                            <span class="badge badge-success">Chat</span>
+                                        </t>
+                                        <t t-elif="record.model_type.raw_value === 'text'">
+                                            <span class="badge badge-info">Text</span>
+                                        </t>
+                                        <t t-elif="record.model_type.raw_value === 'embedding'">
+                                            <span class="badge badge-warning">Embedding</span>
+                                        </t>
+                                        <t t-elif="record.model_type.raw_value === 'image'">
+                                            <span class="badge badge-danger">Image</span>
+                                        </t>
+                                        <t t-elif="record.model_type.raw_value === 'multimodal'">
+                                            <span class="badge badge-primary">Multimodal</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="badge badge-secondary">Other</span>
+                                        </t>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted">Context:</span><br/>
+                                        <strong>
+                                            <t t-if="record.context_length.raw_value">
+                                                <field name="context_length"/> tokens
+                                            </t>
+                                            <t t-else="">
+                                                <span class="text-muted">Not set</span>
+                                            </t>
+                                        </strong>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-2">
+                                    <div class="col-4">
+                                        <span class="text-muted small">Max Output:</span><br/>
+                                        <small><field name="max_tokens"/></small>
+                                    </div>
+                                    <div class="col-4">
+                                        <span class="text-muted small">Temperature:</span><br/>
+                                        <small><field name="temperature"/></small>
+                                    </div>
+                                    <div class="col-4">
+                                        <span class="text-muted small">Top P:</span><br/>
+                                        <small><field name="top_p"/></small>
+                                    </div>
+                                </div>
+                                
+                                <t t-if="record.description.raw_value">
+                                    <div class="mt-2">
+                                        <span class="text-muted small">Description:</span><br/>
+                                        <small class="text-truncate d-block" style="max-width: 200px;">
+                                            <field name="description"/>
+                                        </small>
+                                    </div>
+                                </t>
+                            </div>
+                            
+                            <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                                <div class="o_kanban_card_manage_section o_kanban_manage_reports">
+                                    <div role="menuitem" t-if="!record.is_default.raw_value and record.active.raw_value">
+                                        <a name="action_set_as_default" type="object">
+                                            <i class="fa fa-star" title="Set as Default"/> Set as Default
+                                        </a>
+                                    </div>
+                                    <div role="menuitem" t-if="record.active.raw_value">
+                                        <a name="action_test_model" type="object">
+                                            <i class="fa fa-flask" title="Test Model"/> Test Model
+                                        </a>
+                                    </div>
+                                    <div role="menuitem">
+                                        <a name="action_view_api_config" type="object">
+                                            <i class="fa fa-cogs" title="API Configuration"/> API Configuration
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_card_manage_section o_kanban_manage_new">
+                                    <div role="menuitem">
+                                        <a type="edit">
+                                            <i class="fa fa-edit" title="Edit"/> Edit
+                                        </a>
+                                    </div>
+                                    <div role="menuitem">
+                                        <a type="delete">
+                                            <i class="fa fa-trash" title="Delete"/> Delete
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Model Management Actions -->
+    <record id="action_nuido_ai_model" model="ir.actions.act_window">
+        <field name="name">AI Model Configuration</field>
+        <field name="res_model">nuido.ai.model</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{
+            'search_default_active': 1,
+            'search_default_group_by_provider': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Start configuring your AI models!
+            </p>
+            <p>
+                AI Model Configuration allows you to:<br/>
+                • Manage specific models for each provider<br/>
+                • Set model parameters and defaults<br/>
+                • Distinguish between different model types<br/>
+                • Test model availability and performance
+            </p>
+        </field>
+    </record>
+
+    <!-- Action to Navigate from Provider to Models -->
+    <record id="action_nuido_ai_model_from_provider" model="ir.actions.act_window">
+        <field name="name">Provider Models</field>
+        <field name="res_model">nuido.ai.model</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('provider_id', '=', active_id)]</field>
+        <field name="context">{
+            'default_provider_id': active_id,
+            'search_default_active': 1
+        }</field>
+    </record>
+
+</odoo>
